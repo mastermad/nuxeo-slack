@@ -1,8 +1,6 @@
 const { App } = require("@slack/bolt");
 const config = require("dotenv").config();
 const Nuxeo = require('nuxeo');
-const fs = require('fs');
-const path = require('path');
 
 // Initializes your app with your bot token and signing secret
 const app = new App({
@@ -37,14 +35,19 @@ app.command("/create", async ({ command, ack, say }) => {
             }
         };
         let document = await nuxeo.repository()
-            .create('/default-domain/workspaces/WS', fileDocument)
+            .create(process.env.NUXEO_DEFAULT_WS, fileDocument)
             .then(doc => {
                 return Promise.resolve(doc);
-        });
+            }).catch(err => {
+                console.error(error);
+            });
 
-        await say(`${command.text} was created in Nuxeo ! 🎉 .`);
-        await say('Direct link to the created file => ' + encodeURI(process.env.NUXEO_HOME + document.path));
-
+            if (document){
+                await say(`${command.text} was created in Nuxeo ! 🎉 .`);
+                await say('Direct link to the created file => ' + encodeURI(process.env.NUXEO_HOME + document.path));
+            } else {
+                await say("Sorry, something went wrong.");
+            }
     } catch (error) {
         console.error(error);
     }
@@ -67,7 +70,7 @@ app.command("/nxsearch", async ({ command, ack, say }) => {
                     }
                 }]};
 
-        let query = "SELECT * FROM Document WHERE ecm:primaryType = 'File' and dc:title like '%" +  command.text + "%'";
+        let query = "SELECT * FROM Document WHERE ecm:primaryType = 'File' and ecm:fulltext = '" +  command.text + "'";
         await nuxeo.repository().schemas(['dublincore', 'thumbnail', 'file']).query({query: query}).then((docs) => {
             docs.entries.forEach((doc) => {
                 row.blocks.push(

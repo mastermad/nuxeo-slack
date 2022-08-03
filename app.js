@@ -10,12 +10,12 @@ const app = new App({
     appToken: process.env.APP_TOKEN
   });
 
-  // nuxeo app (basic auth for fast start)
+  // nuxeo app (basic auth for fast start and no need to deploy anywhere else)
 var nuxeo = new Nuxeo({
 auth: {
     method: 'basic',
-    username: 'Administrator',
-    password: 'Administrator'
+    username: process.env.NUXEO_USER,
+    password: process.env.NUXEO_PASSWORD
 }
 });
 
